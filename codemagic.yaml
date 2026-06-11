@@ -3,19 +3,23 @@ workflows:
     name: Build WebDriverAgent
     instance_type: mac_mini_m2
     scripts:
-      - name: Clone WebDriverAgent
+      - name: Clone WDA
         script: |
           git clone https://github.com/appium/WebDriverAgent.git
-          cd WebDriverAgent
-          
-      - name: Build WDA
+
+      - name: Build WDA with correct Bundle ID
         script: |
           cd WebDriverAgent
+          sed -i '' \
+            's/com.facebook.WebDriverAgentRunner/com.appium.WebDriverAgentRunner/g' \
+            WebDriverAgent.xcodeproj/project.pbxproj
+
           xcodebuild build-for-testing \
             -project WebDriverAgent.xcodeproj \
             -scheme WebDriverAgentRunner \
             -destination "generic/platform=iOS" \
             -derivedDataPath /tmp/wda \
+            PRODUCT_BUNDLE_IDENTIFIER=com.appium.WebDriverAgentRunner.xctrunner \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
 
@@ -25,7 +29,6 @@ workflows:
           mkdir -p Payload
           cp -r WebDriverAgentRunner-Runner.app Payload/
           zip -r WDA-iOS26.ipa Payload/
-          echo "✅ Done"
 
     artifacts:
       - /tmp/wda/Build/Products/Debug-iphoneos/WDA-iOS26.ipa
