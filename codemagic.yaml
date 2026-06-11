@@ -3,27 +3,37 @@ workflows:
     name: Build WebDriverAgent
     instance_type: mac_mini_m2
     environment:
-      node: latest
+      node: v20.0.0
     scripts:
       - name: Install Appium
         script: |
-          npm install -g appium
-          appium driver install xcuitest@9.5.0
+          npm config set ignore-scripts false
+          npm install -g appium@2.11.0 --foreground-scripts
+          appium driver install xcuitest@9.5.0 --source=npm
+          
       - name: Build WDA
         script: |
-          WDA=$(find ~/.appium -name "WebDriverAgent.xcodeproj" -exec dirname {} \; | head -1)
+          WDA=$(find ~/.appium -name "WebDriverAgent.xcodeproj" \
+            -exec dirname {} \; | head -1)
+          echo "WDA path: $WDA"
           cd "$WDA"
+          
           xcodebuild build-for-testing \
             -project WebDriverAgent.xcodeproj \
             -scheme WebDriverAgentRunner \
             -destination "generic/platform=iOS" \
             -derivedDataPath /tmp/wda \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+            
       - name: Package IPA
         script: |
-          cd /tmp/wda/Build/Products/Debug-iphoneos
+          PRODUCTS=/tmp/wda/Build/Products/Debug-iphoneos
+          cd "$PRODUCTS"
           mkdir -p Payload
           cp -r WebDriverAgentRunner-Runner.app Payload/
           zip -r WDA-iOS26.ipa Payload/
+          echo "✅ IPA created"
+          
     artifacts:
       - /tmp/wda/Build/Products/Debug-iphoneos/WDA-iOS26.ipa
