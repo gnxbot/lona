@@ -6,29 +6,32 @@ workflows:
       - name: Clone WDA
         script: |
           git clone https://github.com/appium/WebDriverAgent.git
-
-      - name: Build WDA with correct Bundle ID
-        script: |
           cd WebDriverAgent
-          sed -i '' \
-            's/com.facebook.WebDriverAgentRunner/com.appium.WebDriverAgentRunner/g' \
+          # Change bundle ID
+          sed -i '' 's/com.facebook.WebDriverAgentRunner/com.appium.WebDriverAgentRunner/g' \
             WebDriverAgent.xcodeproj/project.pbxproj
 
+      - name: Build WDA
+        script: |
+          cd WebDriverAgent
           xcodebuild build-for-testing \
             -project WebDriverAgent.xcodeproj \
             -scheme WebDriverAgentRunner \
             -destination "generic/platform=iOS" \
             -derivedDataPath /tmp/wda \
-            PRODUCT_BUNDLE_IDENTIFIER=com.appium.WebDriverAgentRunner.xctrunner \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            ENABLE_BITCODE=NO
 
       - name: Package IPA
         script: |
           cd /tmp/wda/Build/Products/Debug-iphoneos
+          ls -la
           mkdir -p Payload
           cp -r WebDriverAgentRunner-Runner.app Payload/
           zip -r WDA-iOS26.ipa Payload/
 
     artifacts:
       - /tmp/wda/Build/Products/Debug-iphoneos/WDA-iOS26.ipa
+      - /tmp/wda/Build/Products/Debug-iphoneos/*.app
