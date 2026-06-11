@@ -2,20 +2,15 @@ workflows:
   build-wda:
     name: Build WebDriverAgent
     instance_type: mac_mini_m2
-    environment:
-      node: v20.0.0
     scripts:
-      - name: Install Appium
+      - name: Clone WebDriverAgent
         script: |
-          npm install -g appium@2.11.0 --foreground-scripts
-          appium driver install xcuitest
-
+          git clone https://github.com/appium/WebDriverAgent.git
+          cd WebDriverAgent
+          
       - name: Build WDA
         script: |
-          WDA=$(find ~/.appium -name "WebDriverAgent.xcodeproj" \
-            -exec dirname {} \; | head -1)
-          echo "WDA path: $WDA"
-          cd "$WDA"
+          cd WebDriverAgent
           xcodebuild build-for-testing \
             -project WebDriverAgent.xcodeproj \
             -scheme WebDriverAgentRunner \
@@ -26,8 +21,7 @@ workflows:
 
       - name: Package IPA
         script: |
-          PRODUCTS=/tmp/wda/Build/Products/Debug-iphoneos
-          cd "$PRODUCTS"
+          cd /tmp/wda/Build/Products/Debug-iphoneos
           mkdir -p Payload
           cp -r WebDriverAgentRunner-Runner.app Payload/
           zip -r WDA-iOS26.ipa Payload/
