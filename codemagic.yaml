@@ -7,7 +7,6 @@ workflows:
         script: |
           git clone https://github.com/appium/WebDriverAgent.git
           cd WebDriverAgent
-          # Change bundle ID
           sed -i '' 's/com.facebook.WebDriverAgentRunner/com.appium.WebDriverAgentRunner/g' \
             WebDriverAgent.xcodeproj/project.pbxproj
 
@@ -27,11 +26,9 @@ workflows:
       - name: Package IPA
         script: |
           cd /tmp/wda/Build/Products/Debug-iphoneos
-          ls -la
           mkdir -p Payload
           cp -r WebDriverAgentRunner-Runner.app Payload/
           zip -r WDA-iOS26.ipa Payload/
 
     artifacts:
       - /tmp/wda/Build/Products/Debug-iphoneos/WDA-iOS26.ipa
-      - /tmp/wda/Build/Products/Debug-iphoneos/*.app
